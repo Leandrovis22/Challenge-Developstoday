@@ -1,7 +1,9 @@
 "use client";
 
+import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 
 interface CountryInfo {
   dataCountryInfo: {
@@ -16,7 +18,7 @@ interface CountryInfo {
     flag: string;
     iso2: string;
     iso3: string;
-  };
+  } | null;
   population: {
     country: string;
     code: string;
@@ -57,6 +59,7 @@ const CountriesPage: React.FC = () => {
         const data: CountryInfo = await response.json();
         setCountryInfo(data);
       } catch (err) {
+        console.error('Error fetching country info:', (err as Error).message);
         setError((err as Error).message);
       } finally {
         setLoading(false);
@@ -84,7 +87,32 @@ const CountriesPage: React.FC = () => {
     <div>
       {countryInfo ? (
         <div>
-          <pre>{JSON.stringify(countryInfo, null, 2)}</pre>
+          <div className="px-3 flex flex-col md:flex-row items-center justify-center my-10 gap-8">
+            <h1 className="text-3xl md:text-5xl font-bold">{countryInfo.dataCountryInfo.commonName}</h1>
+            {countryInfo.flagData ? (
+              <Image
+                src={countryInfo.flagData.flag}
+                alt={`${countryInfo.dataCountryInfo.commonName} flag`}
+                width={200}
+                height={100}
+              />
+            ) : (
+              <div className="text-center text-red-500">We could not find the FlagData for the country</div>
+            )}
+          </div>
+
+          <div className="px-3 py-4">
+            <h2 className="text-2xl pb-3 text-center">Countries that border {countryInfo.dataCountryInfo.commonName}:</h2>
+            <div className='flex flex-wrap gap-3 justify-center'>
+              {countryInfo.dataCountryInfo.borders.map(border => (
+                <Link key={border.countryCode} href={`/countries/${border.countryCode}`}>
+                  <p className="text-blue-800 underline text-lg">{border.commonName}</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          {/* <pre>{JSON.stringify(countryInfo, null, 2)}</pre> */}
         </div>
       ) : (
         <div>No country information available</div>
@@ -94,3 +122,4 @@ const CountriesPage: React.FC = () => {
 };
 
 export default CountriesPage;
+
