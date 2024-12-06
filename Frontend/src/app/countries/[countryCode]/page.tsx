@@ -4,7 +4,7 @@ import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { Chart } from 'react-google-charts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface CountryInfo {
   dataCountryInfo: {
@@ -42,7 +42,6 @@ interface PopulationCount {
 }
 
 const CountriesPage: React.FC = () => {
-
   const params = useParams();
   const countryCode = params.countryCode as string;
   const [countryInfo, setCountryInfo] = useState<CountryInfo | null>(null);
@@ -59,12 +58,7 @@ const CountriesPage: React.FC = () => {
         const data: CountryInfo = await response.json();
         setCountryInfo(data);
 
-        console.log('Received data:', JSON.stringify(data, null, 2));
-        console.log('Population object:', data.population);
-        console.log('Population counts:', data.population?.populationCounts);
-
       } catch (err) {
-        console.error('Error fetching country info:', (err as Error).message);
         setError((err as Error).message);
       } finally {
         setLoading(false);
@@ -117,17 +111,53 @@ const CountriesPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="px-3 py-4">
-            <h2 className="text-2xl pb-3 text-center">Population of {countryInfo.dataCountryInfo.commonName} over time:</h2>
-            <Chart
-              chartType="LineChart"
-              width="100%"
-              height="400px"
-              data={[
-                ['Year', 'Population'],
-                ...countryInfo.population.populationCounts.map(count => [count.year, count.value]),
-              ]}
-            />
+          {/* Population Chart Section */}
+          <div className="px-3 py-6">
+            <h2 className="text-2xl pb-5 text-center">Population Over Time</h2>
+            {countryInfo.population?.populationCounts && countryInfo.population.populationCounts.length > 0 ? (
+              <div className="w-full h-[400px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart
+                    data={countryInfo.population.populationCounts}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="year" 
+                      label={{ value: 'Year', position: 'insideBottomRight', offset: -10 }}
+                    />
+                    <YAxis 
+                      label={{ 
+                        value: 'Population', 
+                        angle: -90, 
+                        position: 'insideLeft',
+                        offset: 0
+                      }} 
+                      tickFormatter={(value) => new Intl.NumberFormat('en-US', {
+                        notation: 'compact',
+                        compactDisplay: 'short'
+                      }).format(value)}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [
+                        new Intl.NumberFormat('en-US').format(value as number), 
+                        'Population'
+                      ]}
+                    />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="value" 
+                      stroke="#8884d8" 
+                      activeDot={{ r: 8 }} 
+                      name="Population"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">No population data available</div>
+            )}
           </div>
         </div>
       ) : (
@@ -138,4 +168,3 @@ const CountriesPage: React.FC = () => {
 };
 
 export default CountriesPage;
-
