@@ -20,7 +20,8 @@ export const countryInfoController = async (req: Request, res: Response) => {
         } else {
             const responsePopulation = await fetch('https://countriesnow.space/api/v0.1/countries/population/');
             const dataPopulation = await responsePopulation.json();
-            populationData = dataPopulation.data.find((x: { country: string; }) => x.country === dataCountryInfo.commonName);
+            populationData = dataPopulation.data.find((x: { country: string; }) => x.country === dataCountryInfo.commonName) ||
+                dataPopulation.data.find((x: { country: string; }) => x.country.toLowerCase().includes(dataCountryInfo.commonName.toLowerCase()));
         }
 
         res.json({ dataCountryInfo: dataCountryInfo, flagData: flagData, population: populationData });

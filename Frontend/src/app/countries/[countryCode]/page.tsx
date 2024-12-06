@@ -4,6 +4,7 @@ import Image from 'next/image';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { Chart } from 'react-google-charts';
 
 interface CountryInfo {
   dataCountryInfo: {
@@ -51,13 +52,17 @@ const CountriesPage: React.FC = () => {
   useEffect(() => {
     const fetchCountryInfo = async () => {
       try {
-        console.log('Fetching country info for:', countryCode);
         const response = await fetch(`http://localhost:3000/country-info/${countryCode}`);
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
         const data: CountryInfo = await response.json();
         setCountryInfo(data);
+
+        console.log('Received data:', JSON.stringify(data, null, 2));
+        console.log('Population object:', data.population);
+        console.log('Population counts:', data.population?.populationCounts);
+
       } catch (err) {
         console.error('Error fetching country info:', (err as Error).message);
         setError((err as Error).message);
@@ -112,7 +117,18 @@ const CountriesPage: React.FC = () => {
             </div>
           </div>
 
-          {/* <pre>{JSON.stringify(countryInfo, null, 2)}</pre> */}
+          <div className="px-3 py-4">
+            <h2 className="text-2xl pb-3 text-center">Population of {countryInfo.dataCountryInfo.commonName} over time:</h2>
+            <Chart
+              chartType="LineChart"
+              width="100%"
+              height="400px"
+              data={[
+                ['Year', 'Population'],
+                ...countryInfo.population.populationCounts.map(count => [count.year, count.value]),
+              ]}
+            />
+          </div>
         </div>
       ) : (
         <div>No country information available</div>
